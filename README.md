@@ -92,3 +92,27 @@ local client = require("henchman").new {
   },
 }
 ```
+
+### Tmux
+
+Uses a tmux window or pane as the agent terminal for the current workspace.
+
+Requires Neovim to be running inside a tmux session.
+
+```lua
+local client = require("henchman").new {
+  adapter = require("henchman").adapter.tmux {
+    command = { "pi" },
+    launch_type = "window", -- window | pane
+  },
+}
+
+-- Pane split example:
+local pane_client = require("henchman").new {
+  adapter = require("henchman").adapter.tmux {
+    command = { "pi" },
+    launch_type = "pane",
+    pane_direction = "horizontal", -- horizontal | vertical
+  },
+}
+```
