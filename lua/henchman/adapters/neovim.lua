@@ -85,6 +85,7 @@ local function focus_terminal(bufnr)
       if vim.api.nvim_win_get_buf(winid) == bufnr then
         vim.api.nvim_set_current_tabpage(tabpage)
         vim.api.nvim_set_current_win(winid)
+        vim.cmd "startinsert"
         return
       end
     end
@@ -92,6 +93,7 @@ local function focus_terminal(bufnr)
 
   vim.cmd "botright vertical split"
   vim.api.nvim_win_set_buf(0, bufnr)
+  vim.cmd "startinsert"
 end
 
 function M.open(adapter_config, open_opts)
