@@ -115,10 +115,12 @@ function M.open(args)
   vim.api.nvim_create_autocmd("BufWriteCmd", {
     buffer = bufnr,
     callback = function()
-      args.on_submit(message_from_buffer(bufnr))
+      local message = message_from_buffer(bufnr)
       vim.bo[bufnr].modified = false
 
       vim.schedule(function()
+        args.on_submit(message)
+
         if vim.api.nvim_buf_is_valid(bufnr) then
           vim.api.nvim_buf_delete(bufnr, { force = true })
         end
