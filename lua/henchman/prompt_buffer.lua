@@ -36,21 +36,20 @@ local function current_buffer()
   return nil
 end
 
-local function focus_or_create_buffer(split)
-  local bufnr = current_buffer()
-  if bufnr then
-    local winid = vim.fn.bufwinid(bufnr)
-    if winid ~= -1 then
-      vim.api.nvim_set_current_win(winid)
-    else
-      vim.cmd(split)
-      vim.api.nvim_win_set_buf(0, bufnr)
-    end
-    return bufnr
+local function focus_buffer(bufnr, split)
+  local winid = vim.fn.bufwinid(bufnr)
+  if winid ~= -1 then
+    vim.api.nvim_set_current_win(winid)
+  else
+    vim.cmd(split)
+    vim.api.nvim_win_set_buf(0, bufnr)
   end
+end
 
+local function create_buffer(split, on_submit)
   vim.cmd(split)
-  bufnr = vim.api.nvim_create_buf(false, true)
+
+  local bufnr = vim.api.nvim_create_buf(false, true)
   current_bufnr = bufnr
   vim.api.nvim_win_set_buf(0, bufnr)
 
@@ -59,6 +58,7 @@ local function focus_or_create_buffer(split)
   vim.bo[bufnr].bufhidden = "wipe"
   vim.bo[bufnr].filetype = "markdown"
   vim.bo[bufnr].swapfile = false
+  vim.b[bufnr].henchman_on_submit = on_submit
 
   vim.api.nvim_create_autocmd("BufWipeout", {
     buffer = bufnr,
@@ -69,7 +69,36 @@ local function focus_or_create_buffer(split)
     end,
   })
 
+  vim.api.nvim_create_autocmd("BufWriteCmd", {
+    buffer = bufnr,
+    callback = function()
+      local message = message_from_buffer(bufnr)
+      local submit = vim.b[bufnr].henchman_on_submit
+      vim.bo[bufnr].modified = false
+
+      vim.schedule(function()
+        submit(message)
+
+        if vim.api.nvim_buf_is_valid(bufnr) then
+          vim.api.nvim_buf_delete(bufnr, { force = true })
+        end
+      end)
+    end,
+  })
+
   return bufnr
+end
+
+local function focus_or_create_buffer(split, on_submit)
+  local bufnr = current_buffer()
+  if bufnr then
+    vim.b[bufnr].henchman_on_submit = on_submit
+    focus_buffer(bufnr, split)
+    return { bufnr = bufnr, is_new = false }
+  end
+
+  bufnr = create_buffer(split, on_submit)
+  return { bufnr = bufnr, is_new = true }
 end
 
 local function initial_lines(message)
@@ -103,30 +132,22 @@ function M.open(args)
 
   local prompt_buffer_config = normalize_prompt_buffer_config(args.prompt_buffer)
 
-  local bufnr = focus_or_create_buffer(prompt_buffer_config.split)
+  local buffer = focus_or_create_buffer(prompt_buffer_config.split, args.on_submit)
+  local bufnr = buffer.bufnr
 
-  local lines = initial_lines(args.message)
+  local message = args.message
+  if not buffer.is_new then
+    local previous_message = message_from_buffer(bufnr)
+    if previous_message ~= "" then
+      message = previous_message .. "\n\n" .. message
+    end
+  end
+
+  local lines = initial_lines(message)
   local last_line = lines[#lines] or ""
   vim.api.nvim_buf_set_lines(bufnr, 0, -1, false, lines)
   vim.api.nvim_win_set_cursor(0, { #lines, #last_line })
   vim.cmd "startinsert"
-
-  vim.api.nvim_clear_autocmds({ event = "BufWriteCmd", buffer = bufnr })
-  vim.api.nvim_create_autocmd("BufWriteCmd", {
-    buffer = bufnr,
-    callback = function()
-      local message = message_from_buffer(bufnr)
-      vim.bo[bufnr].modified = false
-
-      vim.schedule(function()
-        args.on_submit(message)
-
-        if vim.api.nvim_buf_is_valid(bufnr) then
-          vim.api.nvim_buf_delete(bufnr, { force = true })
-        end
-      end)
-    end,
-  })
 
   return bufnr
 end

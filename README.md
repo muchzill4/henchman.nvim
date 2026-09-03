@@ -43,7 +43,7 @@ client.send_selection "refactor this"
 
 ## Compose
 
-Compose opens a temporary markdown buffer before sending the prompt.
+Compose opens a temporary markdown buffer before sending the prompt. If it is already open, Henchman reuses it and appends the new context after a blank line, so multiple visual selections can be composed into one prompt.
 
 ```lua
 client.send { compose = true }
