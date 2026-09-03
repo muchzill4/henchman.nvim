@@ -158,7 +158,7 @@ end
 local function normalize_adapter_config(adapter_opts)
   adapter_opts = adapter_opts or {}
   if not adapter_opts.command then
-    error("Missing kitty adapter command")
+    error "Missing kitty adapter command"
   end
 
   local adapter_config = {

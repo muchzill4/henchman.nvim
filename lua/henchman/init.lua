@@ -76,7 +76,7 @@ function M.new(henchman_config)
 
   local adapter = henchman_config.adapter
   if not adapter then
-    error("Missing henchman adapter")
+    error "Missing henchman adapter"
   end
 
   local function send_payload(payload, send_opts)
@@ -94,9 +94,7 @@ function M.new(henchman_config)
   end
 
   return {
-    open = function(open_opts)
-      return adapter.open(open_opts)
-    end,
+    open = function(open_opts) return adapter.open(open_opts) end,
     send = function(instruction_or_opts, send_opts)
       local instruction, opts = normalize_send_args(instruction_or_opts, send_opts)
       return send_payload(with_instruction(context.current_file(), instruction), opts)

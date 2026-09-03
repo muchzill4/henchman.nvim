@@ -124,10 +124,10 @@ end
 function M.open(args)
   args = args or {}
   if args.message == nil then
-    error("Missing prompt buffer message")
+    error "Missing prompt buffer message"
   end
   if not args.on_submit then
-    error("Missing prompt buffer on_submit callback")
+    error "Missing prompt buffer on_submit callback"
   end
 
   local prompt_buffer_config = normalize_prompt_buffer_config(args.prompt_buffer)

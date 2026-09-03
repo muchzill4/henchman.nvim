@@ -132,10 +132,7 @@ function M.send(adapter_config, message, send_opts)
 
   local function send_payload()
     if valid_terminal(bufnr) then
-      vim.api.nvim_chan_send(
-        vim.b[bufnr].terminal_job_id,
-        terminal_payload(message)
-      )
+      vim.api.nvim_chan_send(vim.b[bufnr].terminal_job_id, terminal_payload(message))
       if send_opts.focus then
         focus_terminal(bufnr)
       end
@@ -154,7 +151,7 @@ end
 function M.new(adapter_opts)
   adapter_opts = adapter_opts or {}
   if not adapter_opts.command then
-    error("Missing Neovim adapter command")
+    error "Missing Neovim adapter command"
   end
 
   local adapter_config = {

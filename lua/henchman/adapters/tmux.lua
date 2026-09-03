@@ -176,10 +176,8 @@ local function send(adapter_config, message, send_opts)
 
   local function send_payload()
     local buffer_name = "henchman_" .. workspace.current().id
-    local loaded, load_output = system_ok(
-      tmux_cmd { "load-buffer", "-b", buffer_name, "-" },
-      message
-    )
+    local loaded, load_output =
+      system_ok(tmux_cmd { "load-buffer", "-b", buffer_name, "-" }, message)
     if not loaded then
       notify("Could not load tmux paste buffer: " .. load_output, vim.log.levels.ERROR)
       return
@@ -234,7 +232,7 @@ end
 local function normalize_adapter_config(adapter_opts)
   adapter_opts = adapter_opts or {}
   if not adapter_opts.command then
-    error("Missing tmux adapter command")
+    error "Missing tmux adapter command"
   end
 
   local adapter_config = {
@@ -249,7 +247,7 @@ local function normalize_adapter_config(adapter_opts)
   end
 
   if adapter_opts.pane_direction and adapter_config.launch_type ~= "pane" then
-    error("tmux pane_direction is only valid when launch_type is 'pane'")
+    error "tmux pane_direction is only valid when launch_type is 'pane'"
   end
 
   if
