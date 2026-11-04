@@ -26,6 +26,7 @@ local prompt_buffer = require "henchman.prompt_buffer"
 ---@field neovim fun(adapter_opts: HenchmanNeovimAdapterOpts): HenchmanAdapter
 ---@field kitty fun(adapter_opts: HenchmanKittyAdapterOpts): HenchmanAdapter
 ---@field tmux fun(adapter_opts: HenchmanTmuxAdapterOpts): HenchmanAdapter
+---@field rex fun(adapter_opts: HenchmanRexAdapterOpts): HenchmanAdapter
 
 local M = {}
 
@@ -34,6 +35,7 @@ M.adapter = {
   neovim = require("henchman.adapters.neovim").new,
   kitty = require("henchman.adapters.kitty").new,
   tmux = require("henchman.adapters.tmux").new,
+  rex = require("henchman.adapters.rex").new,
 }
 
 ---@param context_text string
