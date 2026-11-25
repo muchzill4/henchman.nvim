@@ -15,7 +15,7 @@ local workspace = require "henchman.workspace"
 ---@field launch_type HenchmanRexLaunchType
 ---@field split_direction HenchmanRexSplitDirection
 ---@field initial_send_delay_ms integer
----@field session string
+---@field session_selector string
 
 local M = {}
 
@@ -28,14 +28,15 @@ local function system_ok(cmd, input)
   return vim.v.shell_error == 0, output
 end
 
-local function rex_cmd(session, args)
-  local cmd = { "rex", "-s", session }
+local function rex_cmd(session_selector, args)
+  local cmd = { "rex", "-s", session_selector }
   vim.list_extend(cmd, args)
   return cmd
 end
 
 local function find_block(adapter_config, current_workspace)
-  local ok, output = system_ok(rex_cmd(adapter_config.session, { "block", "list", "--json" }))
+  local ok, output =
+    system_ok(rex_cmd(adapter_config.session_selector, { "block", "list", "--json" }))
   if not ok then
     return nil, output
   end
@@ -71,7 +72,7 @@ local function launch_block(adapter_config, current_workspace, launch_opts)
   table.insert(args, "--")
   vim.list_extend(args, adapter_config.command)
 
-  local ok, output = system_ok(rex_cmd(adapter_config.session, args))
+  local ok, output = system_ok(rex_cmd(adapter_config.session_selector, args))
   if not ok then
     return nil, output
   end
@@ -108,7 +109,7 @@ local function ensure_block(adapter_config, launch_opts)
 end
 
 local function focus_block(adapter_config, block_id)
-  return system_ok(rex_cmd(adapter_config.session, { "block", "focus", block_id }))
+  return system_ok(rex_cmd(adapter_config.session_selector, { "block", "focus", block_id }))
 end
 
 local function open(adapter_config, open_opts)
@@ -136,7 +137,7 @@ local function send(adapter_config, message, send_opts)
 
   local function send_payload()
     local sent, output = system_ok(
-      rex_cmd(adapter_config.session, { "send", "-b", block_id }),
+      rex_cmd(adapter_config.session_selector, { "send", "-b", block_id }),
       terminal_payload(message)
     )
     if not sent then
@@ -167,9 +168,10 @@ local function normalize_adapter_config(adapter_opts)
     error("Missing rex adapter command")
   end
 
-  local session = vim.env.REX_SESSION
-  if not session then
-    error("REX_SESSION is not set")
+  -- Rex can resolve the current session from its pane ID, even after a tab moves.
+  local session_selector = vim.env.REX_BLOCK
+  if not session_selector or session_selector == "" then
+    error "REX_BLOCK is not set"
   end
 
   local adapter_config = {
@@ -177,7 +179,7 @@ local function normalize_adapter_config(adapter_opts)
     launch_type = adapter_opts.launch_type or "split",
     split_direction = adapter_opts.split_direction or "right",
     initial_send_delay_ms = adapter_opts.initial_send_delay_ms or 500,
-    session = session,
+    session_selector = session_selector,
   }
 
   if adapter_config.launch_type ~= "split" and adapter_config.launch_type ~= "window" then
